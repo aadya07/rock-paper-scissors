@@ -47,7 +47,7 @@ export const GameProvider = ({ children }) => {
   };
 
   const updateGame = (newGame) => {
-    setGame(newGame);
+    setGame(prev => newGame ? { ...newGame } : null);
     localStorage.setItem("game", JSON.stringify(newGame));
   };
 

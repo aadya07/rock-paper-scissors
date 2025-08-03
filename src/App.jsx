@@ -4,11 +4,8 @@ import Home from "./components/Home";
 import Login from "./components/Login";
 import Lobby from "./components/Lobby";
 import Game from "./components/Game";
-import { GameContext } from "./context/GameContext";
-import { useContext } from "react";
 
 export default function App() {
-  const { currentUser, game } = useContext(GameContext);
 
   return (
     <div className="app-wrapper">

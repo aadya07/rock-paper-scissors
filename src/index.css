@@ -596,6 +596,49 @@ li {
   padding: 10px;
 }
 
+.current-user {
+  color: limegreen;
+  font-weight: bold;
+}
+
+.selected-card {
+  border: 3px solid limegreen;
+  border-radius: 12px;
+  padding: 10px;
+  background: rgba(0, 255, 0, 0.1);
+  transition: 0.3s ease;
+}
+
+.selected-text {
+  text-align: center;
+  font-weight: bold;
+  color: limegreen;
+  margin-top: 8px;
+}
+
+.text-red {
+  color: #ff5733;
+}
+
+.loader-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 30px;
+}
+
+.loader-img {
+  width: 80px;
+  height: 80px;
+}
+
+.loading-text {
+  color: white;
+  margin-top: 10px;
+  font-weight: bold;
+  font-size: 1.2rem;
+}
+
 .choice-btn {
   padding: 10px 20px;
   font-size: 18px;
@@ -728,5 +771,44 @@ li {
   .result-message {
     font-size: 1.5rem;
     margin-top: 20%;
+  }
+  .choices {
+    flex-direction: column;
+    align-items: center;
+    margin-top: 45%;
+  }
+
+  .choice-card {
+    width: 80%;
+    max-width: 250px;
+    margin-bottom: 15px;
+  }
+
+  .choice-img {
+    width: 55%;
+    height: 55%;
+  }
+
+  .choice-btn {
+    width: 100%;
+    margin-top: 10px;
+  }
+  .game-heading {
+    margin-top: 15%;
+  }
+  .players-grid {
+    display: flex;
+    flex-direction: column;
+    max-height: 250px;
+    overflow-y: auto;
+    padding-right: 5px;
+  }
+  .players-grid::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .players-grid::-webkit-scrollbar-thumb {
+    background-color: rgba(255, 255, 255, 0.5);
+    border-radius: 3px;
   }
 }

@@ -31,7 +31,7 @@ export default function Login() {
       return;
     }
 
-    // ✅ Add user to players
+    // Add user to players
     const updatedPlayers = [...players, username];
     updatePlayers(updatedPlayers);
 

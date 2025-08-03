@@ -1,6 +1,5 @@
 import React, { useContext, useState, useEffect } from "react";
 import { GameContext } from "../context/GameContext";
-import Result from "./Result";   // ✅ Import the new component
 import stone from "../assets/stone_img.png";
 import scissor from "../assets/scissor_img.png";
 import { useNavigate } from "react-router-dom";
@@ -12,23 +11,69 @@ const choices = [
   { name: "Scissors", img: scissor },
 ];
 
+const choiceImages = {
+  Rock: stone,
+  Paper: paper,
+  Scissors: scissor,
+};
+
 export default function Game() {
   const {
     currentUser,
     game,
     updateGame,
+    updatePlayers,
+    players,
     scores,
     updateScores,
     updateWaitingList,
   } = useContext(GameContext);
 
   const [selected, setSelected] = useState("");
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const savedUser = sessionStorage.getItem("currentUser");
+    if (!currentUser && !savedUser) {
+      navigate("/");
+    }
+  }, [currentUser, navigate]);
+
 
   useEffect(() => {
     setSelected("");
   }, [game]);
 
-  const navigate = useNavigate(); // ✅ inside the component
+  useEffect(() => {
+    const handleTabClose = () => {
+      if (!currentUser) return;
+
+      // Remove player from players list
+      const storedPlayers = JSON.parse(localStorage.getItem("players")) || [];
+      const updatedPlayers = storedPlayers.filter((p) => p !== currentUser);
+      localStorage.setItem("players", JSON.stringify(updatedPlayers));
+      updatePlayers(updatedPlayers);
+
+      // End game for both players if ongoing
+      const storedGame = JSON.parse(localStorage.getItem("game"));
+      if (storedGame && (storedGame.player1 === currentUser || storedGame.player2 === currentUser)) {
+        localStorage.removeItem("game");
+        updateGame(null);
+      }
+
+      // Remove from waiting list if present
+      const storedWaiting = JSON.parse(localStorage.getItem("waitingList")) || [];
+      const updatedWaiting = storedWaiting.filter((p) => p !== currentUser);
+      localStorage.setItem("waitingList", JSON.stringify(updatedWaiting));
+      updateWaitingList(updatedWaiting);
+
+      // Clear session user
+      sessionStorage.removeItem("currentUser");
+    };
+
+    window.addEventListener("beforeunload", handleTabClose);
+    return () => window.removeEventListener("beforeunload", handleTabClose);
+  }, [currentUser, updatePlayers, updateGame, updateWaitingList]);
 
   if (!game) {
     return (
@@ -43,10 +88,8 @@ export default function Game() {
 
   const handleMove = (choice) => {
     const newGame = { ...game, moves: { ...game.moves, [currentUser]: choice } };
-    updateGame(newGame);
+    updateGame({ ...newGame });
     setSelected(choice);
-    console.log("Moves:", moves);
-
 
     const moves = newGame.moves;
     if (moves[newGame.player1] && moves[newGame.player2]) {
@@ -56,8 +99,9 @@ export default function Game() {
         newGame.player1,
         newGame.player2
       );
-      newGame.result = result;
-      updateGame(newGame);
+
+      const updatedGame = { ...newGame, result };
+      updateGame(updatedGame);
 
       const newScores = { ...scores };
       if (result.winner) {
@@ -96,83 +140,97 @@ export default function Game() {
   const handleEndGame = () => {
     updateGame(null);
 
-    if (window.confirm("End game? This will allow next players to join.")) {
-      const waiting = JSON.parse(localStorage.getItem("waitingList")) || [];
-      if (waiting.length >= 1) {
-        const nextPlayer = waiting[0];
-        updateWaitingList(waiting.slice(1));
-
-        const availableOpponent =
-          currentUser === game.player1 ? game.player2 : game.player1;
-
-        const newGame = {
-          player1: nextPlayer,
-          player2: availableOpponent,
-          moves: {},
-          result: null,
-        };
-        updateGame(newGame);
-      }
-    }
+    (window.confirm("This will END the game.")) 
   };
 
-  const handleExitGame = () => {
-    if (window.confirm("Are you sure you want to exit the game?")) {
-      updateGame(null);
-    }
+  const handleExit = () => {
+    const updatedPlayers = players.filter((p) => p !== currentUser);
+    updatePlayers(updatedPlayers);
+    sessionStorage.removeItem("currentUser");
+    navigate("/");
   };
 
   return (
     <div className="game-container">
-      {/* ✅ Heading */}
+      <button className="exit-button" onClick={handleExit}>Exit →</button>
+
       <div className="game-heading">
-        <span className="player-name">{game.player1}</span>
+        <span
+          className={`player-name ${currentUser === game.player1 ? "current-user" : ""}`}
+        >
+          {game.player1}
+        </span>
         <span className="vs-text"> VS </span>
-        <span className="player-name">{game.player2}</span>
+        <span
+          className={`player-name ${currentUser === game.player2 ? "current-user" : ""}`}
+        >
+          {game.player2}
+        </span>
       </div>
 
-      {/* ✅ Exit Button */}
-      <div className="exit-btn-container">
-        <button className="exit-btn" onClick={handleExitGame}>
-          Exit Game
-        </button>
-      </div>
-
-      {/* ✅ Only show this when result is NOT displayed */}
       {!game.result && (
-        <p className="text-white">
-          Your choice: {game.moves[currentUser] || selected || "None"}
-        </p>
-      )}
-
-      {/* ✅ Choices */}
-      {!game.moves[currentUser] && !game.result && (
         <div className="choices">
-          {choices.map((choice) => (
-            <div key={choice.name} className="choice-card">
-              <img src={choice.img} alt={choice.name} className="choice-img" />
-              <button
-                className="choice-btn"
-                onClick={() => handleMove(choice.name)}
-              >
-                {choice.name}
-              </button>
+          {game.moves[currentUser] || selected ? (
+            <div className="choice-card selected-card">
+              <img
+                src={choiceImages[game.moves[currentUser] || selected]}
+                alt={game.moves[currentUser] || selected}
+                className="choice-img"
+              />
+              <p className="selected-text">
+                You chose: {game.moves[currentUser] || selected}
+              </p>
+              <p className="text-white">Your opponent is yet to choose!</p>
             </div>
-          ))}
+          ) : (
+            choices.map((choice) => (
+              <div key={choice.name} className="choice-card">
+                <img src={choice.img} alt={choice.name} className="choice-img" />
+                <button
+                  className="choice-btn"
+                  onClick={() => handleMove(choice.name)}
+                >
+                  {choice.name}
+                </button>
+              </div>
+            ))
+          )}
         </div>
       )}
 
-      {/* ✅ Use Result component */}
       {game.result && (
-        <Result
-          result={game.result}
-          player1={game.player1}
-          player2={game.player2}
-          move1={game.moves[game.player1]}
-          move2={game.moves[game.player2]}
-          handleNextRound={handleNextRound}
-          handleEndGame={handleEndGame}
-        />
+        <div className="result-container">
+          <h3 className="result-message">{game.result.message}</h3>
+
+          <div className="result-choices">
+            <div className="player-choice-card">
+              <img
+                src={choiceImages[game.moves[game.player1]]}
+                alt={game.moves[game.player1]}
+                className="result-img"
+              />
+              <p className="player-name blue">{game.player1}</p>
+            </div>
+
+            <div className="player-choice-card">
+              <img
+                src={choiceImages[game.moves[game.player2]]}
+                alt={game.moves[game.player2]}
+                className="result-img"
+              />
+              <p className="player-name yellow">{game.player2}</p>
+            </div>
+          </div>
+
+          <div className="result-buttons">
+            <button onClick={handleNextRound} className="choice-btn">
+              Play Again
+            </button>
+            <button onClick={handleEndGame} className="choice-btn">
+              End Game
+            </button>
+          </div>
+        </div>
       )}
     </div>
   );
