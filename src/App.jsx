@@ -9,7 +9,7 @@ export default function App() {
 
   return (
     <div className="app-wrapper">
-      <Router>
+      <Router basename="/rock-paper-scissors">
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
